@@ -1,0 +1,78 @@
+import React, { useState, useContext, useReducer, useEffect } from 'react'
+import cartItems from './data'
+import reducer from './reducer'
+// ATTENTION!!!!!!!!!!
+// I SWITCHED TO PERMANENT DOMAIN
+const url = 'https://course-api.com/react-useReducer-cart-project'
+const AppContext = React.createContext()
+
+// initialstate
+const intialState = {
+  loading: false,
+  cart: cartItems,
+  total: 0,
+  amount: 0,
+}
+
+
+
+const AppProvider = ({ children }) => {
+  
+  const [state, dispatch] = useReducer(reducer,intialState);
+  
+  const clearCart = () => {
+    dispatch({type:'CLEAR_CART'}) //our dispatch 
+  }
+
+  const removeItem =(id) => {
+    dispatch({type: 'REMOVE_ITEM', payload: id}); // our dispatch, type payload == id as in param
+  }
+
+  const increase = (id) => {
+    dispatch({type: 'INCREASE', payload: id}) 
+  }
+  const decrease = (id) => {
+    dispatch({type: 'DECREASE', payload: id}) 
+  }
+
+  const fetchData = async () => {
+    dispatch({type: 'LOADING'});
+    const resp = await fetch(url);
+    const cart = await resp.json();
+
+    //what we get from api, we put in as payload to reduccer
+    dispatch({type: 'DISPLAY_ITEMS', payload: cart})
+
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, [])
+
+  //for total
+  useEffect(() =>{
+    console.log('helloi');
+    dispatch({type: 'GET_TOTALS'})
+
+  },[state.cart])
+
+  return (
+    <AppContext.Provider
+      value={{
+        ...state, //spreading the state and the values 
+        clearCart, //sending it through our context
+        removeItem,
+        increase, 
+        decrease,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  )
+}
+// make sure use
+export const useGlobalContext = () => {
+  return useContext(AppContext)
+}
+
+export { AppContext, AppProvider }
